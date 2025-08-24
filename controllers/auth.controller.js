@@ -282,13 +282,24 @@ export const login = async (req, res) => {
     { expiresIn: "3d" }
   );
 
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: true, // 🔥 must be true for HTTPS (Render)
-    sameSite: "none", // 🔥 allow cross-site from localhost frontend
-    maxAge: 1000 * 60 * 60 * 72,
-    path: "/",
-  });
+  res
+    .cookie("token", token, {
+      httpOnly: true,
+      secure: true, // ✅ required for HTTPS (Render)
+      sameSite: "none", // ✅ cross-site cookies
+      maxAge: 1000 * 60 * 60 * 72, // 72 hours
+      path: "/",
+    })
+    .status(200)
+    .json({
+      message: "Login successful",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
 };
 
 export const logout = (req, res) => {
