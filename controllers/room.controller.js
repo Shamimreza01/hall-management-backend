@@ -44,6 +44,31 @@ export const createRoom = async (req, res) => {
     res.status(500).json({ message: "Server error while creating room." });
   }
 };
+export const deleteRoom = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const hallId = req.hallId;
+
+    const room = await Room.findOneAndDelete({ _id: roomId, hall: hallId });
+    if (room.occupants && room.occupants.length > 0) {
+      return res
+        .status(400)
+        .json({ message: "Cannot delete room with occupants." });
+    }
+    if (!room) {
+      return res.status(404).json({ message: "Room not found." });
+    }
+
+    await Hall.findByIdAndUpdate(hallId, {
+      $inc: { totalCapacity: -room.capacity },
+    });
+
+    res.status(200).json({ message: "Room deleted successfully." });
+  } catch (err) {
+    console.error("Error deleting room:", err);
+    res.status(500).json({ message: "Server error while deleting room." });
+  }
+};
 
 export const bulkCreateRoomRange = async (req, res) => {
   try {
@@ -53,7 +78,6 @@ export const bulkCreateRoomRange = async (req, res) => {
       return res.status(400).json({ message: error.details[0].message });
 
     const { startRoom, endRoom, roomType, capacity, floor } = req.body;
-    console.log("i am bulk create starting");
     if (startRoom > endRoom) {
       return res.status(400).json({ message: "startRoom must be ≤ endRoom." });
     }
@@ -118,11 +142,7 @@ export const getRoomWiseStudents = async (req, res) => {
       role: "student",
       hall: hallId,
       approvalStatus: "approved",
-    })
-      .select(
-        "name studentDetails.profilePhoto studentDetails.department studentDetails.position studentDetails.room"
-      )
-      .lean();
+    }).lean();
 
     // ✅ Step 3: Map students by room
     const roomWiseStudents = {};
@@ -130,7 +150,6 @@ export const getRoomWiseStudents = async (req, res) => {
     for (const student of students) {
       const roomId = student.studentDetails.room?.toString();
       const position = student.studentDetails.position;
-
       if (!roomId || !position) continue;
 
       if (!roomWiseStudents[roomId]) {
@@ -138,10 +157,7 @@ export const getRoomWiseStudents = async (req, res) => {
       }
 
       roomWiseStudents[roomId][position] = {
-        name: student.name,
-        photo: student.studentDetails.profilePhoto || null,
-        department: student.studentDetails.department,
-        position,
+        student,
       };
     }
 

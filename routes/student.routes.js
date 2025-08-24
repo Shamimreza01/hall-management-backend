@@ -5,11 +5,12 @@ import {
   pendingStudentsList,
   rejectedStudentsList,
   rejectStudent,
+  removeStudent,
   studentsList,
 } from "../controllers/student.controller.js";
-import { assignUserHall } from "../middlewares/assignHall.middleware.js";
+import assignUserHall from "../middlewares/assignHall.middleware.js";
 import authorizeRoles from "../middlewares/authorizeRoles.middleware.js";
-import { isAuthenticated } from "../middlewares/isAuthenticated.middleware.js";
+import isAuthenticated from "../middlewares/isAuthenticated.middleware.js";
 
 const router = express.Router();
 
@@ -26,6 +27,13 @@ router.patch(
   authorizeRoles("Provost"),
   assignUserHall,
   rejectStudent
+);
+router.patch(
+  "/:userId/remove",
+  isAuthenticated,
+  authorizeRoles("Provost"),
+  assignUserHall,
+  removeStudent
 );
 router.get(
   "/",

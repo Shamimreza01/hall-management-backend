@@ -133,6 +133,7 @@ const UserSchema = new mongoose.Schema(
     },
     profilePhoto: {
       type: String,
+      public_id: String,
     },
 
     designation: {
@@ -144,8 +145,16 @@ const UserSchema = new mongoose.Schema(
 
     approvalStatus: {
       type: String,
-      enum: ["pending", "approved", "rejected", "expaired"],
+      enum: ["pending", "approved", "rejected", "former"],
       default: "pending",
+    },
+    formerHistory: {
+      type: [
+        {
+          formerDate: Date,
+          hall: { type: mongoose.Schema.Types.ObjectId, ref: "Hall" },
+        },
+      ],
     },
     rejectionReason: {
       type: String,
@@ -159,10 +168,6 @@ const UserSchema = new mongoose.Schema(
     studentDetails: studentDetailsSchema,
 
     lastLogin: Date,
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
     lastEditedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

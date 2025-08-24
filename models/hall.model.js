@@ -74,7 +74,13 @@ const hallSchema = new mongoose.Schema(
 
     contactPhone: {
       type: String,
-      match: /^\+880[0-9]{10}$/,
+    },
+    secretCode: {
+      type: String,
+    },
+    info: {
+      type: [String],
+      default: [],
     },
 
     isActive: {

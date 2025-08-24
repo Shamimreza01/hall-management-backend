@@ -19,6 +19,7 @@ export const createHall = async (req, res) => {
       facilities = [],
       contactEmail,
       contactPhone,
+      secretCode,
       isActive,
     } = req.body;
 
@@ -37,6 +38,7 @@ export const createHall = async (req, res) => {
       facilities,
       contactEmail,
       contactPhone,
+      secretCode,
       isActive,
     });
 
@@ -83,7 +85,26 @@ export const deactivateHall = async (req, res) => {
     res.status(500).json({ message: "Server error during deactivation." });
   }
 };
-export const hallsList = getList(Hall, (req) => {});
+export const activateHall = async (req, res) => {
+  try {
+    const { hallId } = req.params;
+
+    const hall = await Hall.findById(hallId);
+    if (!hall) return res.status(404).json({ message: "Hall not found." });
+
+    hall.isActive = true;
+    await hall.save();
+
+    res.status(200).json({ message: "Hall activated successfully." });
+  } catch (error) {
+    console.error("Activate hall error:", error);
+    res.status(500).json({ message: "Server error during activation." });
+  }
+};
+export const hallsList = getList(Hall, (req) => {}, {
+  path: "provost",
+  select: "name",
+});
 export const activeHallsList = getList(Hall, (req) => ({
   isActive: true,
 }));
@@ -91,4 +112,9 @@ export const deactivateHallsList = getList(Hall, (req) => ({
   isActive: false,
 }));
 
-export const hallListForReg = getList(Hall, (req) => ({}), null, "_id name");
+export const hallListForReg = getList(
+  Hall,
+  (req) => ({ isActive: true }),
+  null,
+  "_id name"
+);

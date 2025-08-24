@@ -173,3 +173,18 @@ const room = {
 }
 
 */
+
+const notice = {
+  title: "",
+  content: "",
+  visibility: "public",
+  hall: "",
+  attachments: [],
+  expiryDate: "",
+};
+/* 
+title:10th notice
+content:this is a notice to testing purpoose.
+attachments:[string]
+visibility:private
+*/

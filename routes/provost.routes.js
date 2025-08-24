@@ -3,12 +3,14 @@ import {
   approvedProvostsList,
   approveProvost,
   pendingProvostsList,
+  provostAssign,
+  provostList,
   rejectedProvostsList,
   rejectProvost,
   removeProvost,
 } from "../controllers/provost.controller.js";
 import authorizeRoles from "../middlewares/authorizeRoles.middleware.js";
-import { isAuthenticated } from "../middlewares/isAuthenticated.middleware.js";
+import isAuthenticated from "../middlewares/isAuthenticated.middleware.js";
 
 const router = express.Router();
 
@@ -32,6 +34,12 @@ router.patch(
   authorizeRoles("vc"),
   removeProvost
 );
+router.patch(
+  "/:userId/assign",
+  isAuthenticated,
+  authorizeRoles("vc"),
+  provostAssign
+);
 router.get(
   "/pending-provosts",
   isAuthenticated,
@@ -50,5 +58,6 @@ router.get(
   authorizeRoles("vc"),
   approvedProvostsList
 );
+router.get("/", isAuthenticated, authorizeRoles("vc"), provostList);
 
 export default router;

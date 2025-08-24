@@ -7,7 +7,7 @@ import {
   registerViceProvost,
   studentsRegistration,
 } from "../controllers/auth.controller.js";
-import { isAuthenticated } from "../middlewares/isAuthenticated.middleware.js";
+import isAuthenticated from "../middlewares/isAuthenticated.middleware.js";
 import upload from "../middlewares/upload.middleware.js";
 
 const router = express.Router();

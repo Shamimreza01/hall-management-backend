@@ -8,7 +8,6 @@ export default function authorizeRoles(...roles) {
     }
 
     // 2️⃣ If the user has the required role, continue to the next middleware or route
-    console.log("i am authorizeRoles");
     next();
   };
 }

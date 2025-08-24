@@ -9,9 +9,8 @@ export const hallValidationSchema = Joi.object({
   totalBlocks: Joi.number().integer().min(1).default(4),
   monthlyRent: Joi.number().min(0).required(),
   contactEmail: Joi.string().email().required(),
-  contactPhone: Joi.string()
-    .pattern(/^\+880[0-9]{10}$/)
-    .required(),
+  contactPhone: Joi.string().required(),
+  secretCode: Joi.string(),
   facilities: Joi.array().items(Joi.string()).default([]),
   isActive: Joi.boolean().required(),
 });

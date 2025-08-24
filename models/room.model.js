@@ -15,7 +15,7 @@ const RoomSchema = new mongoose.Schema(
     },
     roomType: {
       type: String,
-      enum: ["2-bed", "4-bed", "6-bed"],
+      enum: ["2-bed", "4-bed", "6-bed", "public room"],
       required: true,
     },
     capacity: {

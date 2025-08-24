@@ -1,13 +1,11 @@
 // middlewares/assignHall.js
 import User from "../models/user.model.js";
 
-export const assignUserHall = async (req, res, next) => {
+const assignUserHall = async (req, res, next) => {
   try {
     const { id, role } = req.user;
-    console.log("i am starting of assignHall");
-
     // Only for Provost or Vice Provost
-    if (!["Provost", "viceProvost"].includes(role)) return next();
+    if (!["Provost", "viceProvost", "student"].includes(role)) return next();
 
     const user = await User.findById(id).select("hall");
 
@@ -27,3 +25,4 @@ export const assignUserHall = async (req, res, next) => {
       .json({ message: "Internal server error while assigning hall." });
   }
 };
+export default assignUserHall;

@@ -143,8 +143,12 @@ export const registerProvost = async (req, res) => {
     hall,
     secretCode,
   } = req.body;
-
-  if (secretCode !== process.env.PROVOST_REG_SECRET) {
+  // 🔐 Check secret code
+  const hallCheck = await Hall.findById(hall);
+  if (!hallCheck) {
+    return res.status(404).json({ message: "Hall not found." });
+  }
+  if (secretCode !== hallCheck?.secretCode) {
     return res
       .status(403)
       .json({ message: "Unauthorized registration attempt." });
@@ -307,10 +311,21 @@ export const getCurrentUser = async (req, res) => {
   if (!me) {
     return res.status(404).json({ message: "User not found." });
   }
-  const hall = await Hall.findById(me.hall);
-  if (!hall) {
-    return res.status(404).json({ message: "Hall not found." });
+  let hall;
+  if (user.role !== "vc") {
+    hall = await Hall.findById(me.hall);
+    if (!hall) {
+      return res.status(404).json({ message: "Hall not found." });
+    }
+    if (hall.isActive === false) {
+      return res.status(403).json({ message: "Hall is not active." });
+    }
   }
+  let room;
+  if (me.studentDetails) {
+    room = await Room.findById(me.studentDetails.room);
+  }
+
   res.status(200).json({
     user: {
       id: me._id,
@@ -318,10 +333,11 @@ export const getCurrentUser = async (req, res) => {
       email: me.email,
       role: me.role,
       profilePhoto: me.profilePhoto,
-      hall: me.hall,
-      hallName: hall.name,
+      hall: hall,
+      hallName: hall?.name,
       approvalStatus: me.approvalStatus,
       studentDetails: me.studentDetails || null,
+      roomNumber: room?.roomNumber || null,
     },
   });
 };

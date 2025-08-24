@@ -111,8 +111,9 @@ export const removeProvost = async (req, res) => {
     await hall.save();
 
     // ✅ Reset user's status if needed
-    user.approvalStatus = "expaired"; // Or 'removed', 'revoked' if you want a log
-    user.hall = null; // optionally unset hall assignment
+    user.approvalStatus = "former";
+    user.formerHistory.push({ formerDate: new Date(), hall: hall._id });
+    user.hall = null;
     await user.save();
 
     res.status(200).json({ message: "Provost removed successfully." });
@@ -121,6 +122,53 @@ export const removeProvost = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+export const provostAssign = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { hallId } = req.body;
+
+    // Find the user and hall
+    const user = await User.findById(userId);
+    const hall = await Hall.findById(hallId);
+
+    if (!user || user.role !== "Provost") {
+      return res.status(404).json({ message: "Provost not found." });
+    }
+
+    if (!hall) {
+      return res.status(404).json({ message: "Hall not found." });
+    }
+
+    // Check if hall is already assigned to another provost
+    if (hall.provost) {
+      return res.status(400).json({
+        message: "This hall is already assigned to another provost.",
+      });
+    }
+
+    // Assign the hall to the provost
+    user.hall = hall._id;
+    hall.provost = user._id;
+    user.approvalStatus = "approved";
+
+    await user.save();
+    await hall.save();
+
+    res.status(200).json({
+      message: "Provost assigned to hall successfully.",
+      provostId: user._id,
+      hallName: hall.name,
+    });
+  } catch (error) {
+    console.error("Error in provostAssign:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+export const provostList = getList(User, (req) => ({ role: "Provost" }), {
+  path: "hall formerHistory.hall",
+  select: "name",
+});
 
 export const pendingProvostsList = getList(
   User,
@@ -130,10 +178,15 @@ export const pendingProvostsList = getList(
 export const approvedProvostsList = getList(
   User,
   (req) => ({ role: "Provost", approvalStatus: "approved" }),
-  { path: "hall", select: "name" }
+  { path: "hall formerHistory.hall", select: "name" }
 );
 export const rejectedProvostsList = getList(
   User,
   (req) => ({ role: "Provost", approvalStatus: "rejected" }),
+  { path: "hall", select: "name" }
+);
+export const formerProvostsList = getList(
+  User,
+  (req) => ({ role: "Provost", approvalStatus: "former" }),
   { path: "hall", select: "name" }
 );

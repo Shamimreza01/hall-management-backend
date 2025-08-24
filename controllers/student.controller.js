@@ -1,3 +1,4 @@
+import cloudinary from "../config/cloudinary.js";
 import Hall from "../models/hall.model.js";
 import Room from "../models/room.model.js";
 import User from "../models/user.model.js";
@@ -144,7 +145,42 @@ export const rejectStudent = async (req, res) => {
     res.status(500).json({ message: "Server error while rejecting student." });
   }
 };
+export const removeStudent = async (req, res) => {
+  try {
+    const { userId } = req.params;
 
+    const student = await User.findOne({
+      _id: userId,
+      role: "student",
+      hall: req.hallId,
+    });
+
+    if (!student) {
+      return res.status(404).json({ message: "Student not found." });
+    }
+
+    // ✅ Extract public_id from profilePhoto
+    if (student.profilePhoto) {
+      const urlParts = student.profilePhoto.split("/");
+      const fileName = urlParts[urlParts.length - 1]; // e.g., "d3wpycrtdkvpyrh5vlq6.jpg"
+      const folder = urlParts[urlParts.length - 2]; // e.g., "students"
+      const publicId = `hall-management/${folder}/${fileName.split(".")[0]}`;
+
+      // delete from cloudinary
+      await cloudinary.uploader.destroy(publicId);
+    }
+
+    // ✅ delete from DB
+    await student.deleteOne();
+
+    res
+      .status(200)
+      .json({ message: "Student and profile photo removed successfully." });
+  } catch (err) {
+    console.error("Remove student error:", err);
+    res.status(500).json({ message: "Server error while removing student." });
+  }
+};
 export const studentsList = getList(
   User,
   (req) => ({ hall: req.hallId, role: "student" }),
