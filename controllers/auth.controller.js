@@ -285,7 +285,10 @@ export const login = async (req, res) => {
   res
     .cookie("token", token, {
       httpOnly: true,
-      maxAge: 60 * 60 * 1000 * 72,
+      secure: process.env.NODE_ENV === "production", // ✅ required for HTTPS
+      sameSite: "none", // ✅ allow cross-site cookies
+      maxAge: 1000 * 60 * 60 * 72, // 72h
+      path: "/", // ✅ cookie valid for all routes
     })
     .json({
       message: "Login successful",
@@ -295,9 +298,9 @@ export const login = async (req, res) => {
 export const logout = (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
-    sameSite: "strict",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
+    secure: process.env.NODE_ENV === "production", // ✅ same flags as login
+    sameSite: "none",
+    path: "/", // ✅ must match path used when setting the cookie
   });
   res.json({ message: "Logged out successfully." });
 };
