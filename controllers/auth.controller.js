@@ -299,10 +299,11 @@ export const login = async (req, res) => {
 export const logout = (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // ✅ same flags as login
+    secure: true, // ✅ match login cookie
     sameSite: "none",
-    path: "/", // ✅ must match path used when setting the cookie
+    path: "/",
   });
+
   res.json({ message: "Logged out successfully." });
 };
 
