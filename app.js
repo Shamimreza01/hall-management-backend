@@ -15,7 +15,7 @@ dotenv.config();
 const app = express();
 app.use(
   cors({
-    origin: "http://localhost:5173", // ✅ frontend origin
+    origin: ["http://localhost:5173", "https://pusthall.netlify.app"],
     credentials: true, // ✅ allow cookies (JWT)
   })
 );
