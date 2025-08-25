@@ -137,6 +137,16 @@ export const rejectStudent = async (req, res) => {
 
     student.approvalStatus = "rejected";
     student.rejectionReason = reason;
+    if (student.studentDetails.room?._id) {
+      await Room.updateOne(
+        { _id: student.studentDetails.room._id },
+        { $pull: { occupants: student._id } }
+      );
+
+      // Optionally also unset student's room field
+      student.studentDetails.room = undefined;
+    }
+
     await student.save();
 
     res.status(200).json({ message: "Student rejected successfully." });
