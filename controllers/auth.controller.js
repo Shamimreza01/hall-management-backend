@@ -255,51 +255,55 @@ export const registerViceProvost = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-  const { error } = loginValidation.validate(req.body);
-  if (error) return res.status(400).json({ message: error.details[0].message });
+  try {
+    const { error } = loginValidation.validate(req.body);
+    if (error)
+      return res.status(400).json({ message: error.details[0].message });
 
-  const { email, password } = req.body;
+    const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
-  if (!user) return res.status(400).json({ message: "Invalid credentials." });
+    const user = await User.findOne({ email }).select("+password"); // ensure password is included if schema hides it
+    if (!user) return res.status(400).json({ message: "Invalid credentials." });
 
-  if (user.approvalStatus === "pending") {
-    return res.status(403).json({ message: "Account pending approval." });
-  }
-  if (user.approvalStatus === "rejected")
-    return res.status(403).json({
-      rejectionReason: user.rejectionReason,
-      message: "Your account has been rejected by the authority.",
-    });
+    if (user.approvalStatus === "pending") {
+      return res.status(403).json({ message: "Account pending approval." });
+    }
+    if (user.approvalStatus === "rejected") {
+      return res.status(403).json({
+        rejectionReason: user.rejectionReason,
+        message: "Your account has been rejected by the authority.",
+      });
+    }
 
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch)
-    return res.status(400).json({ message: "Invalid credentials." });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch)
+      return res.status(400).json({ message: "Invalid credentials." });
 
-  const token = jwt.sign(
-    { id: user._id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "3d" }
-  );
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "3d" }
+    );
 
-  res
-    .cookie("token", token, {
+    res.cookie("token", token, {
       httpOnly: true,
-      secure: true, // ✅ required for HTTPS (Render)
-      sameSite: "none", // ✅ cross-site cookies
+      secure: process.env.NODE_ENV === "production", // ✅ secure only in prod
+      sameSite: "none",
       maxAge: 1000 * 60 * 60 * 72, // 72 hours
       path: "/",
-    })
-    .status(200)
-    .json({
-      message: "Login successful",
     });
+
+    return res.status(200).json({ message: "Login successful" });
+  } catch (err) {
+    console.error("Login error:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
 };
 
 export const logout = (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
-    secure: true, // ✅ match login cookie
+    secure: process.env.NODE_ENV === "production", // only secure in prod
     sameSite: "none",
     path: "/",
   });
