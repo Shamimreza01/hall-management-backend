@@ -11,7 +11,7 @@ import provostRoutes from "./routes/provost.routes.js";
 import roomRoutes from "./routes/room.routes.js";
 import studentRoutes from "./routes/student.routes.js";
 dotenv.config();
-
+app.set("trust proxy", 1);
 const app = express();
 app.use(
   cors({
