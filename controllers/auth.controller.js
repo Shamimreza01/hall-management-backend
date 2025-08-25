@@ -287,8 +287,8 @@ export const login = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // ✅ secure only in prod
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: true,
+      sameSite: none,
       maxAge: 1000 * 60 * 60 * 72, // 72 hours
       path: "/",
     });
@@ -303,8 +303,8 @@ export const login = async (req, res) => {
 export const logout = (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // only secure in prod
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: true, // only secure in prod
+    sameSite: "none",
     path: "/",
   });
 
