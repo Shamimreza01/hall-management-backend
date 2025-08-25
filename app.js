@@ -11,8 +11,9 @@ import provostRoutes from "./routes/provost.routes.js";
 import roomRoutes from "./routes/room.routes.js";
 import studentRoutes from "./routes/student.routes.js";
 dotenv.config();
-app.set("trust proxy", 1);
+
 const app = express();
+app.set("trust proxy", 1);
 app.use(
   cors({
     origin: ["http://localhost:5173", "https://pusthall.netlify.app"],
