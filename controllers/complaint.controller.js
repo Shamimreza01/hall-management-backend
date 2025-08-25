@@ -76,7 +76,13 @@ export const createComplaint = async (req, res) => {
 export const getComplaints = async (req, res) => {
   try {
     const complaints = await Complaint.find({ hall: req.hallId })
-      .populate("createdBy", "name email")
+      .populate("createdBy", "name email room")
+      .populate({
+        path: "createdBy",
+        select: "name email room",
+        populate: { path: "room", select: "roomNumber" },
+      })
+
       .populate("assignedTo", "name email");
     return res.status(200).json({
       message: "Complaints retrieved successfully",
