@@ -179,7 +179,15 @@ export const removeStudent = async (req, res) => {
       // delete from cloudinary
       await cloudinary.uploader.destroy(publicId);
     }
+    if (student.studentDetails.room?._id) {
+      await Room.updateOne(
+        { _id: student.studentDetails.room._id },
+        { $pull: { occupants: student._id } }
+      );
 
+      // Optionally also unset student's room field
+      student.studentDetails.room = undefined;
+    }
     // ✅ delete from DB
     await student.deleteOne();
 

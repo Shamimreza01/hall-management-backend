@@ -118,3 +118,21 @@ export const hallListForReg = getList(
   null,
   "_id name"
 );
+export const hallDetails = async (req, res) => {
+  try {
+    const hallId = req.hallId;
+
+    const hall = await Hall.findById(hallId).populate("provost", "name email");
+
+    if (!hall) {
+      return res.status(404).json({ message: "Hall not found." });
+    }
+
+    res.status(200).json({ hall });
+  } catch (error) {
+    console.error("Error fetching hall details:", error);
+    res
+      .status(500)
+      .json({ message: "Server error while fetching hall details." });
+  }
+};

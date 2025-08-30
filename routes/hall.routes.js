@@ -5,10 +5,12 @@ import {
   createHall,
   deactivateHall,
   deactivateHallsList,
+  hallDetails,
   hallListForReg,
   hallsList,
   updateHall,
 } from "../controllers/hall.controller.js";
+import assignUserHall from "../middlewares/assignHall.middleware.js";
 import authorizeRoles from "../middlewares/authorizeRoles.middleware.js";
 import isAuthenticated from "../middlewares/isAuthenticated.middleware.js";
 
@@ -46,6 +48,13 @@ router.get(
   isAuthenticated,
   authorizeRoles("vc"),
   deactivateHallsList
+);
+router.get(
+  "/halldetails",
+  isAuthenticated,
+  authorizeRoles("Provost"),
+  assignUserHall,
+  hallDetails
 );
 
 export default router;
