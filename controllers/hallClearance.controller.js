@@ -6,7 +6,7 @@ import { hallClearanceValidationSchema } from "../validations/hallClearance.vali
 
 export const createHallClearance = async (req, res) => {
   const session = await mongoose.startSession();
-
+  console.log("Request Body:", req.body);
   try {
     session.startTransaction();
 
@@ -65,12 +65,13 @@ export const createHallClearance = async (req, res) => {
     // ✅ FIX 3: Pass all the required fields to the constructor.
     const hallClearance = new HallClearance({
       student: student._id,
-      hall: req.hallId, // Assuming this comes from middleware
+      year,
+      roll: student.studentDetails.roll,
+      hall: req.hallId,
       department: student.studentDetails.department,
       clearanceReason,
-      semester, // Mongoose will ignore this if not required by the schema
-      year,
-      reasonDetails, // Mongoose will ignore this if not required
+      semester,
+      reasonDetails,
     });
 
     await hallClearance.save({ session });
@@ -136,6 +137,32 @@ export const approveHallClearance = async (req, res) => {
     return res.status(200).json(hallClearance);
   } catch (error) {
     console.error("Failed to approve hall clearance:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const verifyHallClearance = async (req, res) => {
+  try {
+    console.log(req.body);
+    const { clearanceId } = req.body;
+
+    const hallClearance = await HallClearance.findOne({ clearanceId });
+
+    if (!hallClearance) {
+      return res.status(404).json({ error: "Hall clearance not found." });
+    }
+    const { roll, clearanceReason, status, approvedAt } = hallClearance;
+    const clearanceData = {
+      clearanceId,
+      clearanceReason,
+      roll,
+      status,
+      approvedAt,
+    };
+
+    return res.status(200).json(clearanceData);
+  } catch (error) {
+    console.error("Failed to verify hall clearance:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };

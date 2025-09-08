@@ -20,6 +20,11 @@ const hallClearanceSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    roll: {
+      type: String,
+      required: true,
+      trim: true,
+    },
     department: {
       type: String,
       required: true,

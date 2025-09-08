@@ -35,5 +35,8 @@ app.use("/api/notices", noticeRoutes);
 app.use("/api/complaints", complaintRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/clearance", hallClearanceRoutes);
+app.use("/api/guest-request", (req, res) => {
+  res.send("wait bro wait, the developer is eating now");
+});
 
 export default app;

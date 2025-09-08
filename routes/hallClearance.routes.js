@@ -4,6 +4,7 @@ import {
   createHallClearance,
   getHallClearances,
   getMyHallClearances,
+  verifyHallClearance,
 } from "../controllers/hallClearance.controller.js";
 import assignHall from "../middlewares/assignHall.middleware.js";
 import authorizeRole from "../middlewares/authorizeRoles.middleware.js";
@@ -38,5 +39,6 @@ router.get(
   assignHall,
   approveHallClearance
 );
+router.post("/verify", verifyHallClearance);
 
 export default router;
