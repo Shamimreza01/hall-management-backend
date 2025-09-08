@@ -6,6 +6,7 @@ import adminRoutes from "./routes/admin.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import complaintRoutes from "./routes/complaint.routes.js";
 import hallRoutes from "./routes/hall.routes.js";
+import hallClearanceRoutes from "./routes/hallClearance.routes.js";
 import noticeRoutes from "./routes/notice.routes.js";
 import provostRoutes from "./routes/provost.routes.js";
 import roomRoutes from "./routes/room.routes.js";
@@ -33,5 +34,6 @@ app.use("/api/halls", hallRoutes);
 app.use("/api/notices", noticeRoutes);
 app.use("/api/complaints", complaintRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/clearance", hallClearanceRoutes);
 
 export default app;

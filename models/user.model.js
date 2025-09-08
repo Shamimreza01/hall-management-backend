@@ -87,6 +87,12 @@ const studentDetailsSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    clearanceHistory: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "HallClearance",
+      },
+    ],
 
     lastPaymentDate: Date,
     nextPaymentDate: Date,
