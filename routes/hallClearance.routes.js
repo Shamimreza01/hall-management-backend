@@ -2,6 +2,7 @@ import express from "express";
 import {
   approveHallClearance,
   createHallClearance,
+  getHallClearanceById,
   getHallClearances,
   getMyHallClearances,
   verifyHallClearance,
@@ -33,6 +34,12 @@ router.get(
   getMyHallClearances
 );
 router.get(
+  "/:id",
+  isAuthenticated,
+  authorizeRole("student"),
+  getHallClearanceById
+);
+router.patch(
   "/:id/approve",
   isAuthenticated,
   authorizeRole("Provost"),

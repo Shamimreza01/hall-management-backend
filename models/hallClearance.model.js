@@ -35,6 +35,7 @@ const hallClearanceSchema = new mongoose.Schema(
     clearanceReason: {
       type: String,
       enum: ["semesterFinal", "deallocation", "others"],
+      required: true, // It's good practice to require the reason itself
     },
     semester: {
       type: Number,
@@ -69,44 +70,68 @@ const hallClearanceSchema = new mongoose.Schema(
         return this.status === "rejected";
       },
     },
-    approvedAt: {
+    reviewedAt: {
       type: Date,
     },
-    approvedBy: {
+    reviewedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: function () {
-        return this.status === "approved";
+        // This logic is already correct
+        return this.status === "approved" || this.status === "rejected";
       },
     },
+    // REMOVED: `appliedAt` field is redundant because `timestamps: true` provides `createdAt`.
   },
   {
+    // `timestamps: true` will add `createdAt` and `updatedAt` fields.
+    // Use `createdAt` as the application timestamp.
     timestamps: true,
   }
 );
+
+// This compound index is excellent for querying.
 hallClearanceSchema.index({ status: 1, hall: 1, year: -1 });
 
+// Helper function remains the same.
 function generateRandomSuffix() {
   return crypto.randomBytes(3).toString("hex").toUpperCase();
 }
 
+// IMPROVED: `pre('validate')` hook for clearanceId generation
 hallClearanceSchema.pre("validate", function (next) {
   if (this.isNew) {
     const randomPart = generateRandomSuffix();
-    const semester =
-      this.clearanceReason === "deallocation"
-        ? "DE"
-        : this.clearanceReason === "others"
-        ? "OT"
-        : this.semester;
-    this.clearanceId = `CL-${this.department}-${semester}-${this.year}-${randomPart}`;
+    let reasonCode;
+
+    switch (this.clearanceReason) {
+      case "semesterFinal":
+        // Use a placeholder if semester isn't set, although validation should catch it.
+        reasonCode = this.semester || "XX";
+        break;
+      case "deallocation":
+        reasonCode = "DE";
+        break;
+      case "others":
+        reasonCode = "OT";
+        break;
+      default:
+        // Fallback for an unexpected reason
+        reasonCode = "GN"; // General
+    }
+
+    this.clearanceId = `CL-${this.department}-${reasonCode}-${this.year}-${randomPart}`;
   }
   next();
 });
 
+// This pre-save hook is already correct and well-written.
 hallClearanceSchema.pre("save", function (next) {
-  if (this.isModified("status") && this.status === "approved") {
-    this.approvedAt = new Date();
+  if (
+    this.isModified("status") &&
+    (this.status === "approved" || this.status === "rejected")
+  ) {
+    this.reviewedAt = new Date();
   }
   next();
 });

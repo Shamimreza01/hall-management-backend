@@ -166,3 +166,23 @@ export const verifyHallClearance = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+export const getHallClearanceById = async (req, res) => {
+  try {
+    const hallClearance = await HallClearance.findById(req.params.id).populate(
+      "student hall reviewedBy"
+    );
+    if (hallClearance.student._id.toString() !== req.user.id) {
+      return res
+        .status(403)
+        .json({ error: "You are not authorized to view this clearance." });
+    }
+    if (!hallClearance) {
+      return res.status(404).json({ error: "Hall clearance not found." });
+    }
+
+    return res.status(200).json(hallClearance);
+  } catch (error) {
+    console.error("Failed to get hall clearance:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
