@@ -106,40 +106,16 @@ export const getHallClearances = getList(HallClearance, (req) => ({
   hall: req.hallId,
 }));
 
-export const getMyHallClearances = getList(HallClearance, (req) => ({
-  student: req.user.id,
-}));
-
-export const approveHallClearance = async (req, res) => {
-  try {
-    const hallClearance = await HallClearance.findById(req.params.id);
-
-    if (!hallClearance) {
-      return res.status(404).json({ error: "Clearance request not found." });
-    }
-    if (hallClearance.hall.toString() !== req.hallId) {
-      return res
-        .status(403)
-        .json({ error: "You are not authorized to approve this request." });
-    }
-    // Add a check to prevent re-approving an already approved request
-    if (hallClearance.status === "approved") {
-      return res
-        .status(400)
-        .json({ error: "This clearance has already been approved." });
-    }
-
-    hallClearance.status = "approved";
-    hallClearance.approvedBy = req.user.id;
-
-    await hallClearance.save();
-
-    return res.status(200).json(hallClearance);
-  } catch (error) {
-    console.error("Failed to approve hall clearance:", error);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-};
+export const getMyHallClearances = getList(
+  HallClearance,
+  (req) => ({
+    student: req.user.id,
+  }),
+  [
+    { path: "reviewedBy", select: "name" },
+    { path: "hall", select: "name" },
+  ]
+);
 
 export const verifyHallClearance = async (req, res) => {
   try {
@@ -151,13 +127,14 @@ export const verifyHallClearance = async (req, res) => {
     if (!hallClearance) {
       return res.status(404).json({ error: "Hall clearance not found." });
     }
-    const { roll, clearanceReason, status, approvedAt } = hallClearance;
+    // FIX in verifyHallClearance
+    const { roll, clearanceReason, status, reviewedAt } = hallClearance; // Changed approvedAt to reviewedAt
     const clearanceData = {
       clearanceId,
       clearanceReason,
       roll,
       status,
-      approvedAt,
+      reviewedAt, // Changed approvedAt to reviewedAt
     };
 
     return res.status(200).json(clearanceData);
@@ -184,5 +161,125 @@ export const getHallClearanceById = async (req, res) => {
   } catch (error) {
     console.error("Failed to get hall clearance:", error);
     return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const approveHallClearance = async (req, res) => {
+  try {
+    console.log("iam from here");
+    const hallClearance = await HallClearance.findById(req.params.id);
+
+    if (!hallClearance) {
+      return res.status(404).json({ error: "Clearance request not found." });
+    }
+    if (hallClearance.hall.toString() !== req.hallId) {
+      return res
+        .status(403)
+        .json({ error: "You are not authorized to approve this request." });
+    }
+    // Add a check to prevent re-approving an already approved request
+    if (hallClearance.status === "approved") {
+      return res
+        .status(400)
+        .json({ error: "This clearance has already been approved." });
+    }
+
+    hallClearance.status = "approved";
+    hallClearance.reviewedBy = req.user.id;
+
+    await hallClearance.save();
+
+    return res.status(200).json(hallClearance);
+  } catch (error) {
+    console.error("Failed to approve hall clearance:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+export const rejectHallClearance = async (req, res) => {
+  try {
+    const hallClearance = await HallClearance.findById(req.params.id);
+
+    if (!hallClearance) {
+      return res.status(404).json({ error: "Clearance request not found." });
+    }
+    if (hallClearance.hall.toString() !== req.hallId) {
+      return res
+        .status(403)
+        .json({ error: "You are not authorized to approve this request." });
+    }
+    // Add a check to prevent re-approving an already approved request
+    if (
+      hallClearance.status === "approved" ||
+      hallClearance.status === "rejected"
+    ) {
+      return res
+        .status(400)
+        .json({ error: "This clearance has already been processed." });
+    }
+    const { rejectionReason } = req.body;
+    if (!rejectionReason || rejectionReason.trim() === "") {
+      return res
+        .status(400)
+        .json({ error: "Rejection reason is required to reject a request." });
+    }
+    hallClearance.status = "rejected";
+    hallClearance.rejectionReason = rejectionReason;
+    hallClearance.reviewedBy = req.user.id;
+
+    await hallClearance.save();
+    return res.status(200).json(hallClearance);
+  } catch (error) {
+    console.error("Failed to reject hall clearance:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+export const cancelMyHallClearance = async (req, res) => {
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
+
+    const clearanceId = req.params.id;
+    const userId = req.user.id;
+
+    const hallClearance = await HallClearance.findById(clearanceId).session(
+      session
+    );
+
+    if (!hallClearance) {
+      throw { status: 404, message: "Clearance request not found." };
+    }
+    if (hallClearance.student.toString() !== userId) {
+      throw {
+        status: 403,
+        message: "You are not authorized to cancel this request.",
+      };
+    }
+    if (hallClearance.status !== "pending") {
+      throw {
+        status: 400,
+        message: `Cannot cancel a request with status '${hallClearance.status}'.`,
+      };
+    }
+    await HallClearance.findByIdAndDelete(clearanceId).session(session);
+
+    await User.updateOne(
+      { _id: userId },
+      { $pull: { "studentDetails.clearanceHistory": clearanceId } }
+    ).session(session);
+
+    await session.commitTransaction();
+
+    return res
+      .status(200)
+      .json({ message: "Clearance request successfully canceled." });
+  } catch (error) {
+    await session.abortTransaction();
+    if (error.status) {
+      return res.status(error.status).json({ error: error.message });
+    }
+    console.error("Failed to cancel hall clearance:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  } finally {
+    await session.endSession();
   }
 };

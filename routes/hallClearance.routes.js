@@ -1,10 +1,12 @@
 import express from "express";
 import {
   approveHallClearance,
+  cancelMyHallClearance,
   createHallClearance,
   getHallClearanceById,
   getHallClearances,
   getMyHallClearances,
+  rejectHallClearance,
   verifyHallClearance,
 } from "../controllers/hallClearance.controller.js";
 import assignHall from "../middlewares/assignHall.middleware.js";
@@ -45,6 +47,19 @@ router.patch(
   authorizeRole("Provost"),
   assignHall,
   approveHallClearance
+);
+router.patch(
+  "/:id/reject",
+  isAuthenticated,
+  authorizeRole("Provost"),
+  assignHall,
+  rejectHallClearance
+);
+router.patch(
+  "/:id/cancel",
+  isAuthenticated,
+  authorizeRole("student"),
+  cancelMyHallClearance
 );
 router.post("/verify", verifyHallClearance);
 
