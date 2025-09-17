@@ -145,9 +145,19 @@ export const verifyHallClearance = async (req, res) => {
 };
 export const getHallClearanceById = async (req, res) => {
   try {
-    const hallClearance = await HallClearance.findById(req.params.id).populate(
-      "student hall reviewedBy"
-    );
+    const hallClearance = await HallClearance.findById(req.params.id).populate([
+      { path: "hall", select: "name" }, // Populate hall as before
+      { path: "reviewedBy", select: "name" }, // Populate reviewedBy as before
+      {
+        path: "student", // Populate the 'student' field on HallClearance
+        select: "-password", // Exclude sensitive data
+        populate: {
+          path: "studentDetails.room", // NOW, go inside the populated 'student' and populate its 'room' field
+          select: "roomNumber", // Example: select only the room number
+        },
+      },
+    ]);
+
     if (hallClearance.student._id.toString() !== req.user.id) {
       return res
         .status(403)
