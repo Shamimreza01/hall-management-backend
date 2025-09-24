@@ -1,8 +1,11 @@
+// getList.js (or wherever your getList is defined)
+
 const getList = (
   Model,
   buildSearchObj,
   populateOptions = null,
-  selectFields = null
+  selectFields = null,
+  sortOptions = null // <--- Add this new parameter
 ) => {
   return async (req, res) => {
     try {
@@ -17,6 +20,11 @@ const getList = (
       // ✅ Populate if options exist
       if (populateOptions) {
         query = query.populate(populateOptions);
+      }
+
+      // ✅ Add sorting if options exist <--- New logic here
+      if (sortOptions) {
+        query = query.sort(sortOptions);
       }
 
       const list = await query;
