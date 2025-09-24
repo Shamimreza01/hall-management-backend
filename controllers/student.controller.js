@@ -205,7 +205,8 @@ export const studentsList = getList(
   [
     { path: "hall", select: "name" },
     { path: "studentDetails.room", select: "roomNumber floor" },
-  ]
+  ],
+  { defaultSort: { createdAt: -1 } }
 );
 export const pendingStudentsList = getList(
   User,
