@@ -114,7 +114,9 @@ export const getMyHallClearances = getList(
   [
     { path: "reviewedBy", select: "name" },
     { path: "hall", select: "name" },
-  ]
+  ],
+  null,
+  { createdAt: -1 }
 );
 
 export const verifyHallClearance = async (req, res) => {
