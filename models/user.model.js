@@ -73,7 +73,13 @@ const studentDetailsSchema = new mongoose.Schema(
       enum: ["A", "B", "C", "D"],
       required: true,
     },
-
+    baseExpiryDate: {
+      type: Date,
+    },
+    effectiveExpiryDate: {
+      type: Date,
+      index: true,
+    },
     paymentStatus: {
       type: String,
       enum: ["current", "grace", "delinquent", "exempt"],
@@ -185,6 +191,87 @@ const UserSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
+
+UserSchema.pre("save", async function (next) {
+  const isNewStudent = this.isNew && this.role === "student";
+
+  if (isNewStudent) {
+    try {
+      const session = this.studentDetails.academicSession;
+      if (!session) {
+        return next();
+      }
+      const peerStudent = await mongoose
+        .model("User")
+        .findOne({
+          "studentDetails.academicSession": session,
+          _id: { $ne: this._id },
+        })
+        .select("studentDetails.baseExpiryDate")
+        .lean();
+
+      if (peerStudent && peerStudent.studentDetails.baseExpiryDate) {
+        const dateToApply = peerStudent.studentDetails.baseExpiryDate;
+
+        console.log(
+          `New student in session ${session}. Applying existing baseExpiryDate: ${dateToApply}`
+        );
+
+        this.studentDetails.baseExpiryDate = dateToApply;
+        this.studentDetails.effectiveExpiryDate = dateToApply;
+      }
+    } catch (error) {
+      console.error(
+        `Error in pre-save hook for new student expiry date:`,
+        error
+      );
+      return next(error);
+    }
+  }
+  next();
+});
+UserSchema.statics.recalculateAndSaveExpiry = async function (studentId) {
+  try {
+    const [student, extensions] = await Promise.all([
+      this.findById(studentId).select("studentDetails.baseExpiryDate").lean(),
+      mongoose
+        .model("ResidencyExtension")
+        .find({
+          student: studentId,
+          status: "approved",
+        })
+        .select("newExpiryDate")
+        .lean(),
+    ]);
+
+    if (!student) {
+      console.error(
+        `Recalculation failed: Student with ID ${studentId} not found.`
+      );
+      return;
+    }
+
+    let latestDate = student.studentDetails.baseExpiryDate || new Date(0);
+
+    for (const extension of extensions) {
+      if (extension.newExpiryDate > latestDate) {
+        latestDate = extension.newExpiryDate;
+      }
+    }
+
+    await this.findByIdAndUpdate(studentId, {
+      $set: { "studentDetails.effectiveExpiryDate": latestDate },
+    });
+
+    return latestDate;
+  } catch (error) {
+    console.error(
+      `Critical error during expiry recalculation for student ${studentId}:`,
+      error
+    );
+    throw error;
+  }
+};
 
 // 🎯 Virtuals for easier access
 UserSchema.virtual("roomNumber").get(function () {

@@ -9,6 +9,7 @@ import hallRoutes from "./routes/hall.routes.js";
 import hallClearanceRoutes from "./routes/hallClearance.routes.js";
 import noticeRoutes from "./routes/notice.routes.js";
 import provostRoutes from "./routes/provost.routes.js";
+import ResidencyExtensionRoutes from "./routes/residencyExtension.routes.js";
 import roomRoutes from "./routes/room.routes.js";
 import studentRoutes from "./routes/student.routes.js";
 dotenv.config();
@@ -35,6 +36,7 @@ app.use("/api/notices", noticeRoutes);
 app.use("/api/complaints", complaintRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/clearance", hallClearanceRoutes);
+app.use("/api/extensions", ResidencyExtensionRoutes);
 app.use("/api/guest-request", (req, res) => {
   res.send("wait bro wait, the developer is eating now");
 });
